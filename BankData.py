@@ -12,7 +12,6 @@ import seaborn as sns
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-from warnings import simplefilter
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import KFold
 from sklearn.metrics import confusion_matrix
@@ -58,8 +57,8 @@ data.dropna(axis=0,how='any', inplace=True)
 
 #Dividir la data
 
-data_train = data[:22605]
-data_test = data[22605:]
+data_train = data[:5000]
+data_test = data[5000:]
 
 
 x = np.array(data_train.drop(['y'], 1))
@@ -69,6 +68,13 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size= 0.2)
 
 x_test_out = np.array(data_test.drop(['y'], 1))
 y_test_out = np.array(data_test.y)
+
+
+
+
+
+
+
 
 
 
@@ -90,6 +96,8 @@ for train, test in kfold.split(x, y):
     acc_scores_test_train.append(scores_test_train)
     
 y_pred = logreg.predict(x_test_out)
+
+
 
 #Metricas del modelo
 
@@ -120,9 +128,6 @@ print(f'Precisión: {precision}')
 recall = recall_score(y_test_out, y_pred, average=None).mean()
 print(f'Re-call: {recall}')
 
-f1_score = f1_score(y_test_out, y_pred, average=None).mean()
-
-print(f'f1: {f1_score}')
 
 
 
@@ -157,10 +162,10 @@ svc = SVC(gamma='auto')
 
 for train, test in kfoldSvc.split(x, y):
     svc.fit(x[train], y[train])
-    scores_train_train = svc.score(x[train], y[train])
-    scores_test_train = svc.score(x[test], y[test])
-    acc_scores_train_train_svc.append(scores_train_train)
-    acc_scores_test_train_svc.append(scores_test_train)
+    scores_train_train_svc = svc.score(x[train], y[train])
+    scores_test_train_svc = svc.score(x[test], y[test])
+    acc_scores_train_train_svc.append(scores_train_train_svc)
+    acc_scores_test_train_svc.append(scores_test_train_svc)
     
 y_pred = svc.predict(x_test_out)
 
@@ -182,20 +187,18 @@ print(f'accuracy de Validación: {svc.score(x_test_out, y_test_out)}')
 # Matriz de confusión
 print(f'Matriz de confusión: {confusion_matrix(y_test_out, y_pred)}')
 
-matriz_confusion = confusion_matrix(y_test_out, y_pred)
+matriz_confusion_svc = confusion_matrix(y_test_out, y_pred)
 plt.figure(figsize = (6, 6))
-sns.heatmap(matriz_confusion)
+sns.heatmap(matriz_confusion_svc)
 plt.title("Mariz de confución")
 
-precision = precision_score(y_test_out, y_pred, average=None).mean()
-print(f'Precisión: {precision}')
+precision_svc = precision_score(y_test_out, y_pred, average=None).mean()
+print(f'Precisión: {precision_svc}')
 
-recall = recall_score(y_test_out, y_pred, average=None).mean()
-print(f'Re-call: {recall}')
+recall_svc = recall_score(y_test_out, y_pred, average=None).mean()
+print(f'Re-call: {recall_svc}')
 
-f1_score = f1_score(y_test_out, y_pred, average=None).mean()
 
-print(f'f1: {f1_score}')
 
 
 
@@ -221,24 +224,53 @@ print(f'f1: {f1_score}')
 arbol = DecisionTreeClassifier()
 
 #Entreno el modelo
-arbol.fit(x_train, y_train)
+kfold_arbol = KFold(n_splits=10)
+
+acc_scores_train_train_arbol = []
+acc_scores_test_train_arbol = []
+arbol = LogisticRegression(solver='lbfgs', max_iter = 7600)
+
+
+for train, test in kfold_arbol.split(x, y):
+    arbol.fit(x[train], y[train])
+    scores_train_train_arbol = arbol.score(x[train], y[train])
+    scores_test_train_arbol = arbol.score(x[test], y[test])
+    acc_scores_train_train_arbol.append(scores_train_train_arbol)
+    acc_scores_test_train_arbol.append(scores_test_train_arbol)
+    
+y_pred = arbol.predict(x_test_out)
+
 
 #Metricas del modelo
 
 print('-'*60)
 print('Decision Tree')
 
-#accuracy de test de Entrenamiento de entrenamiento
+# Accuracy de Entrenamiento de Entrenamiento
+print(f'accuracy de Entrenamiento de Entrenamiento: {np.array(acc_scores_train_train_arbol).mean()}')
 
-print(f'accuracy de Entrenamiento de Entrenamiento: {arbol.score (x_train, y_train)}')
+# Accuracy de Test de Entrenamiento
+print(f'accuracy de Test de Entrenamiento: {np.array(acc_scores_test_train_arbol).mean()}')
 
-#accuracy de test de Entrenamiento
+# Accuracy de Validación
+print(f'accuracy de Validación: {arbol.score(x_test_out, y_test_out)}')
 
-print(f'accuracy de test Entrenamiento: {arbol.score (x_test, y_test)}')
 
-#accuracy de Validacio
+# Matriz de confusión
+print(f'Matriz de confusión: {confusion_matrix(y_test_out, y_pred)}')
 
-print(f'accuracy de Validacion: {arbol.score (x_test_out, y_test_out)}')
+matriz_confusion_arbol = confusion_matrix(y_test_out, y_pred)
+plt.figure(figsize = (6, 6))
+sns.heatmap(matriz_confusion_arbol)
+plt.title("Mariz de confución")
+
+precision_arbol = precision_score(y_test_out, y_pred, average=None).mean()
+print(f'Precisión: {precision}')
+
+recall_arbol = recall_score(y_test_out, y_pred, average=None).mean()
+print(f'Re-call: {recall}')
+
+
 
 
 
